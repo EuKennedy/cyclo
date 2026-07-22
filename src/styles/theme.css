@@ -160,6 +160,15 @@ body {
 .collapse-grid.is-open {
   grid-template-rows: 1fr;
 }
+/* Keep collapsed content out of the a11y tree and off the tab order. */
+.collapse-grid > div {
+  visibility: hidden;
+  transition: visibility 0s linear 0.32s;
+}
+.collapse-grid.is-open > div {
+  visibility: visible;
+  transition: visibility 0s linear 0s;
+}
 
 /* Text input */
 .field {
