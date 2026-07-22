@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="a" x1="96" y1="96" x2="416" y2="416" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF5470" />
+      <stop offset="0.36" stop-color="#FFC24B" />
+      <stop offset="0.66" stop-color="#22D3A6" />
+      <stop offset="1" stop-color="#B08CFF" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.6">
+      <stop offset="0" stop-color="#1a1030" />
+      <stop offset="1" stop-color="#050507" />
+    </radialGradient>
+    <filter id="blur" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="18" />
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#glow)" />
+  <circle cx="256" cy="256" r="150" stroke="url(#a)" stroke-width="46" stroke-linecap="round"
+          stroke-dasharray="840 100" transform="rotate(-90 256 256)" opacity="0.55" filter="url(#blur)" />
+  <circle cx="256" cy="256" r="150" stroke="url(#a)" stroke-width="40" stroke-linecap="round"
+          stroke-dasharray="840 100" transform="rotate(-90 256 256)" />
+  <circle cx="256" cy="106" r="34" fill="#FF5470" />
+</svg>

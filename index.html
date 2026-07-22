@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" />
+    <meta name="theme-color" content="#050507" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Cyclo" />
+    <meta
+      name="description"
+      content="Cyclo — acompanhamento de ciclo menstrual local-first, privado e sofisticado. Seus dados ficam no seu dispositivo."
+    />
+    <title>Cyclo — seu ciclo, com clareza</title>
+    <!-- SPA redirect restore for GitHub Pages (paired with public/404.html). -->
+    <script>
+      (function () {
+        var l = window.location;
+        if (l.search[1] === '/') {
+          var decoded = l.search
+            .slice(1)
+            .split('&')
+            .map(function (s) {
+              return s.replace(/~and~/g, '&');
+            })
+            .join('?');
+          window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash);
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
