@@ -1,0 +1,191 @@
+@import 'tailwindcss';
+
+/* ============================================================================
+   Cyclo design system
+   Warm near-black canvas, a cohesive rose→coral→champagne→mauve phase spectrum,
+   Montserrat throughout. Dark-first, editorial, restrained.
+   ========================================================================== */
+
+@theme {
+  /* Surfaces — warm near-black with a faint plum undertone */
+  --color-void: #0a090d;
+  --color-bg: #0e0c12;
+  --color-surface: #16131c;
+  --color-elevated: #1d1926;
+  --color-hairline: rgba(255, 255, 255, 0.07);
+
+  /* Ink — warm whites */
+  --color-ink: #f6f2f4;
+  --color-muted: #b0abb8;
+  --color-faint: #736e7d;
+
+  /* Phase spectrum — one harmonious warm arc (no clashing neon) */
+  --color-menstrual: #db5a73;
+  --color-menstrual-deep: #9e3a50;
+  --color-follicular: #e79a6a;
+  --color-follicular-deep: #b3683c;
+  --color-ovulatory: #f2c879; /* champagne gold — the luminous peak */
+  --color-ovulatory-deep: #c79a46;
+  --color-luteal: #a98fd0;
+  --color-luteal-deep: #74539f;
+
+  /* Type — Montserrat everywhere */
+  --font-sans: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Registered so the live phase color transitions smoothly (not snap). */
+@property --phase {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #a98fd0;
+}
+@property --phase-deep {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #74539f;
+}
+
+:root {
+  color-scheme: dark;
+  --phase: #a98fd0;
+  --phase-deep: #74539f;
+  transition:
+    --phase 0.6s var(--ease-out-expo),
+    --phase-deep 0.6s var(--ease-out-expo);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-void);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--phase) 40%, transparent);
+  color: var(--color-ink);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+/* Frosted glass surface */
+.glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(24px) saturate(1.3);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  border: 1px solid var(--color-hairline);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
+    0 24px 60px -20px rgba(0, 0, 0, 0.55);
+}
+
+.text-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+/* Cycle scrubber */
+.scrubber {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--color-menstrual),
+    var(--color-follicular),
+    var(--color-ovulatory),
+    var(--color-luteal)
+  );
+  outline: none;
+  cursor: pointer;
+}
+.scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--phase);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--phase) 20%, transparent),
+    0 8px 24px -4px color-mix(in srgb, var(--phase) 55%, transparent);
+  transition: background 0.5s var(--ease-out-expo);
+}
+.scrubber::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--phase);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+/* Text input */
+.field {
+  width: 100%;
+  height: 52px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-hairline);
+  padding: 0 16px;
+  color: var(--color-ink);
+  font-size: 15px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
+}
+.field::placeholder {
+  color: var(--color-faint);
+}
+.field:focus {
+  border-color: var(--phase);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--phase) 16%, transparent);
+  background: rgba(255, 255, 255, 0.06);
+}
+.field-invalid {
+  border-color: color-mix(in srgb, var(--color-menstrual) 85%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
