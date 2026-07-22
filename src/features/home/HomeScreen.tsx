@@ -12,6 +12,7 @@ import { CycleRing } from '@/components/CycleRing';
 import { Collapsible } from '@/components/Collapsible';
 import { BarChart } from '@/components/charts';
 import { DropFilledIcon } from '@/components/icons';
+import { PhaseIcon } from '@/components/PhaseIcon';
 
 export function HomeScreen({ settings, cycle }: { settings: SettingsRecord; cycle: CycleState }) {
   const { cycleSettings, status: realStatus, lastStart } = cycle;
@@ -88,7 +89,11 @@ export function HomeScreen({ settings, cycle }: { settings: SettingsRecord; cycl
             {hero.big}
           </span>
           <span className="mt-1 max-w-[150px] text-[12.5px] leading-tight text-ink">{hero.label}</span>
-          <span className="mt-2 text-[12px] font-medium" style={{ color: meta.color }}>
+          <span
+            className="mt-2 flex items-center gap-1.5 text-[12px] font-medium"
+            style={{ color: meta.color }}
+          >
+            <PhaseIcon phase={status.phase} colored={false} width={14} height={14} />
             {meta.label}
           </span>
         </CycleRing>
@@ -133,6 +138,7 @@ export function HomeScreen({ settings, cycle }: { settings: SettingsRecord; cycl
           title={`Sobre a ${guide.name.toLowerCase()}`}
           meta={guide.dayRange}
           accent={meta.color}
+          icon={<PhaseIcon phase={status.phase} width={20} height={20} />}
         >
           <p className="text-[13.5px] leading-relaxed text-muted">{guide.whatsHappening}</p>
           <p className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.12em] text-faint">

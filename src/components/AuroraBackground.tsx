@@ -45,11 +45,11 @@ export function AuroraBackground() {
         }}
         {...drift(-100, -70, 1.15, 32, 2)}
       />
-      {/* Fixed teal aurora shimmer — center, keeps the "northern lights" feel */}
+      {/* Centre bloom — follows the phase so the backdrop never fights the palette */}
       <motion.div
-        className="absolute left-[30%] top-[35%] h-[42vmax] w-[42vmax] rounded-full opacity-25 blur-[52px] will-change-transform"
+        className="absolute left-[30%] top-[35%] h-[42vmax] w-[42vmax] rounded-full opacity-20 blur-[52px] will-change-transform"
         style={{
-          background: 'radial-gradient(circle at center, #22d3a6 0%, transparent 68%)',
+          background: 'radial-gradient(circle at center, var(--phase) 0%, transparent 68%)',
         }}
         {...drift(80, -110, 1.2, 38, 1)}
       />

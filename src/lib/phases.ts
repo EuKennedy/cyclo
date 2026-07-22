@@ -39,8 +39,8 @@ export const phaseMeta = (id: PhaseId): PhaseMeta => PHASES[id];
 
 /** Literal hex values, used to set the animatable `--phase` channel on :root. */
 export const PHASE_HEX: Record<PhaseId, { color: string; deep: string }> = {
-  menstrual: { color: '#e5484d', deep: '#9b1c21' },
-  follicular: { color: '#e79a6a', deep: '#b3683c' },
-  ovulatory: { color: '#f2c879', deep: '#c79a46' },
-  luteal: { color: '#a98fd0', deep: '#74539f' },
+  menstrual: { color: '#ff2d46', deep: '#b00d20' },
+  follicular: { color: '#20d67b', deep: '#0e8f50' },
+  ovulatory: { color: '#ff7a1a', deep: '#c24f05' },
+  luteal: { color: '#6cc5ff', deep: '#2b7fc4' },
 };

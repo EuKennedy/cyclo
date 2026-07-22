@@ -8,12 +8,21 @@ interface CollapsibleProps {
   meta?: string;
   /** Colour for the title (e.g. the current phase accent). */
   accent?: string;
+  /** Leading glyph, aligned with the title. */
+  icon?: ReactNode;
   defaultOpen?: boolean;
   children: ReactNode;
 }
 
 /** Collapsed by default: the summary only expands when she asks for it. */
-export function Collapsible({ title, meta, accent, defaultOpen = false, children }: CollapsibleProps) {
+export function Collapsible({
+  title,
+  meta,
+  accent,
+  icon,
+  defaultOpen = false,
+  children,
+}: CollapsibleProps) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
@@ -24,11 +33,19 @@ export function Collapsible({ title, meta, accent, defaultOpen = false, children
         aria-expanded={open}
         className="flex w-full items-center justify-between gap-3 p-5 text-left"
       >
-        <span className="min-w-0">
-          <span className="block text-[15px] font-semibold" style={accent ? { color: accent } : undefined}>
-            {title}
+        <span className="flex min-w-0 items-center gap-2.5">
+          {icon ? <span className="flex shrink-0 items-center">{icon}</span> : null}
+          <span className="min-w-0">
+            <span
+              className="block text-[15px] font-semibold"
+              style={accent ? { color: accent } : undefined}
+            >
+              {title}
+            </span>
+            {meta ? (
+              <span className="mt-0.5 block text-[12.5px] leading-snug text-muted">{meta}</span>
+            ) : null}
           </span>
-          {meta ? <span className="mt-0.5 block text-[12.5px] leading-snug text-muted">{meta}</span> : null}
         </span>
         <ChevronDownIcon
           className={cn('shrink-0 text-muted transition-transform duration-300', open && 'rotate-180')}

@@ -47,6 +47,51 @@ export function DropFilledIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+/** Sprout — the follicular phase, when energy climbs back up. */
+export function SproutIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg width={22} height={22} viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path
+        d="M12 21.2v-6.4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path d="M12.4 14.4c0-3.4 2.8-6.2 6.2-6.2 0 3.4-2.8 6.2-6.2 6.2Z" />
+      <path d="M11.6 15.4c0-2.9-2.3-5.2-5.2-5.2 0 2.9 2.3 5.2 5.2 5.2Z" opacity="0.8" />
+    </svg>
+  );
+}
+
+/**
+ * Ovum with its corona — the fertile window. Deliberately built from dots
+ * rather than rays: rays read as a sun, dots read as an egg cell.
+ */
+export function OvumIcon(props: SVGProps<SVGSVGElement>) {
+  const dots = Array.from({ length: 8 }, (_, i) => {
+    const a = (i * Math.PI) / 4;
+    return { x: 12 + 8.9 * Math.cos(a), y: 12 + 8.9 * Math.sin(a) };
+  });
+  return (
+    <svg width={22} height={22} viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <circle cx="12" cy="12" r="5.3" />
+      {dots.map((d, i) => (
+        <circle key={i} cx={d.x} cy={d.y} r="1.15" opacity="0.85" />
+      ))}
+    </svg>
+  );
+}
+
+/** Soft filled cloud — the luteal / premenstrual stretch. */
+export function CloudFilledIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg width={22} height={22} viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M8 18.5h9.1a3.9 3.9 0 0 0 .35-7.78 5.75 5.75 0 0 0-10.98-1.3A4.3 4.3 0 0 0 8 18.5Z" />
+    </svg>
+  );
+}
+
 export function ChartIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...base} {...props}>

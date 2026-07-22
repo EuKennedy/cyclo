@@ -23,7 +23,7 @@ import { setPeriodFlow, togglePeriodDay, usePeriodLogs } from '@/lib/periods';
 import { setSexualProtection, toggleSexualActivity, useDailyLog } from '@/lib/dailyLog';
 import type { FlowLevel, SettingsRecord } from '@/lib/db';
 import type { CycleState } from '@/lib/useCycle';
-import { CloudLightningIcon, DropFilledIcon, HeartIcon } from '@/components/icons';
+import { CloudLightningIcon, DropFilledIcon, HeartIcon, OvumIcon } from '@/components/icons';
 import { cn } from '@/lib/cn';
 
 const WEEKDAYS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
@@ -137,33 +137,41 @@ export function CalendarScreen({ cycle }: { settings: SettingsRecord; cycle: Cyc
                         : undefined
                 }
               >
-                <span>{format(d, 'd')}</span>
+                <span className="leading-none">{format(d, 'd')}</span>
+                {/* Fixed-height marker strip so every cell lines up */}
+                <span className="mt-[3px] flex h-[11px] items-center justify-center gap-[3px]">
+                  {isPms && inMonth ? (
+                    <CloudLightningIcon
+                      width={10}
+                      height={10}
+                      style={{ color: isLogged ? '#fff' : 'var(--color-luteal)' }}
+                    />
+                  ) : null}
+                  {!isLogged && (isOv || isFertile) ? (
+                    <span
+                      className="h-[5px] w-[5px] rounded-full"
+                      style={{ background: 'var(--color-ovulatory)', opacity: isOv ? 1 : 0.55 }}
+                    />
+                  ) : null}
+                </span>
                 {isToday && !isLogged ? (
                   <span className="absolute inset-0 rounded-xl ring-1 ring-white/60" />
-                ) : null}
-                {isPms && inMonth ? (
-                  <CloudLightningIcon
-                    className="absolute right-0.5 top-0.5"
-                    width={11}
-                    height={11}
-                    style={{ color: isLogged ? '#fff' : 'var(--color-luteal)' }}
-                  />
-                ) : null}
-                {!isLogged && (isOv || isFertile) ? (
-                  <span
-                    className="absolute bottom-1 h-1 w-1 rounded-full"
-                    style={{ background: 'var(--color-ovulatory)', opacity: isOv ? 1 : 0.5 }}
-                  />
                 ) : null}
               </button>
             );
           })}
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-hairline pt-3 text-[11px] text-muted">
-          <Legend swatchStyle={{ background: 'var(--color-menstrual)' }} label="Menstruação" />
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-hairline pt-3 text-[11px] text-muted">
+          <span className="inline-flex items-center gap-1.5">
+            <DropFilledIcon width={12} height={12} style={{ color: 'var(--color-menstrual)' }} />
+            Menstruação
+          </span>
           <Legend swatchStyle={{ boxShadow: 'inset 0 0 0 1.3px var(--color-menstrual)' }} label="Previsão" />
-          <Legend dot="var(--color-ovulatory)" label="Fértil" />
+          <span className="inline-flex items-center gap-1.5">
+            <OvumIcon width={12} height={12} style={{ color: 'var(--color-ovulatory)' }} />
+            Fértil
+          </span>
           <span className="inline-flex items-center gap-1.5">
             <CloudLightningIcon width={12} height={12} style={{ color: 'var(--color-luteal)' }} />
             TPM
