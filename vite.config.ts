@@ -21,7 +21,7 @@ export default defineConfig(({ command }) => ({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icon.svg'],
+      includeAssets: ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Cyclo — seu ciclo, com clareza',
         short_name: 'Cyclo',
@@ -34,8 +34,9 @@ export default defineConfig(({ command }) => ({
         orientation: 'portrait',
         categories: ['health', 'lifestyle', 'medical'],
         icons: [
-          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
