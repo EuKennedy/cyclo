@@ -36,7 +36,7 @@ export function Collapsible({ title, meta, accent, defaultOpen = false, children
       </button>
 
       <div className={cn('collapse-grid', open && 'is-open')}>
-        <div className="min-h-0 overflow-hidden">
+        <div className="min-h-0 overflow-hidden" aria-hidden={!open}>
           <div className="px-5 pb-5">{children}</div>
         </div>
       </div>
