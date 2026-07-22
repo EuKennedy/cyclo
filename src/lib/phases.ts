@@ -2,54 +2,36 @@ import type { PhaseId } from '@/domain/types';
 
 export interface PhaseMeta {
   id: PhaseId;
-  /** Short pt-BR clinical name. */
+  /** Clinical phase name (pt-BR). */
   label: string;
-  /** Editorial one-word title for the phase's mood. */
-  title: string;
-  /** CSS custom property for the phase's primary accent. */
   color: string;
-  /** CSS custom property for the deeper glow tone. */
   deep: string;
-  /** Short, evocative, validating line (never clinical, never a to-do list). */
-  line: string;
 }
 
-/**
- * UI metadata for the four phases. Copy is editorial and affirming — a mood, not
- * a prescription (docs/RESEARCH-SPEC.md §3).
- */
 export const PHASES: Record<PhaseId, PhaseMeta> = {
   menstrual: {
     id: 'menstrual',
-    label: 'Menstrual',
-    title: 'Recomeço',
+    label: 'Menstruação',
     color: 'var(--color-menstrual)',
     deep: 'var(--color-menstrual-deep)',
-    line: 'Seu corpo abre um novo ciclo. Tempo de desacelerar, se aquecer e se ouvir.',
   },
   follicular: {
     id: 'follicular',
-    label: 'Folicular',
-    title: 'Despertar',
+    label: 'Fase folicular',
     color: 'var(--color-follicular)',
     deep: 'var(--color-follicular-deep)',
-    line: 'A vitalidade volta a subir. Vontade de criar, planejar e se movimentar.',
   },
   ovulatory: {
     id: 'ovulatory',
-    label: 'Ovulatória',
-    title: 'Plenitude',
+    label: 'Ovulação',
     color: 'var(--color-ovulatory)',
     deep: 'var(--color-ovulatory-deep)',
-    line: 'Seu ponto mais luminoso. Clareza, presença e energia no auge.',
   },
   luteal: {
     id: 'luteal',
-    label: 'Lútea',
-    title: 'Introspecção',
+    label: 'Fase lútea',
     color: 'var(--color-luteal)',
     deep: 'var(--color-luteal-deep)',
-    line: 'O ritmo desacelera aos poucos. Um convite a cuidar de si com mais gentileza.',
   },
 };
 

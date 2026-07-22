@@ -17,8 +17,9 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { fertileWindow, ovulationCycleDay, phaseForDay } from '@/domain/cycle';
-import type { CycleSettings } from '@/domain/types';
+import type { CycleSettings, PhaseId } from '@/domain/types';
 import { PHASES } from '@/lib/phases';
+import { PHASE_GUIDANCE } from '@/lib/phaseGuidance';
 import { setPeriodFlow, togglePeriodDay, usePeriodLogs } from '@/lib/periods';
 import type { FlowLevel, SettingsRecord } from '@/lib/db';
 import type { CycleState } from '@/lib/useCycle';
@@ -57,6 +58,13 @@ export function CalendarScreen({ cycle }: { settings: SettingsRecord; cycle: Cyc
   const flowMap = useMemo(() => new Map((logs ?? []).map((l) => [l.date, l.flow])), [logs]);
   const proj = useMemo(() => project(lastStart, cycleSettings), [lastStart, cycleSettings]);
 
+  const phaseOf = (d: Date): PhaseId => {
+    const C = cycleSettings.avgCycleLength;
+    const diff = differenceInCalendarDays(d, lastStart);
+    const dayInCycle = (((diff % C) + C) % C) + 1;
+    return phaseForDay(dayInCycle, cycleSettings);
+  };
+
   const [month, setMonth] = useState(startOfMonth(today));
   const [selected, setSelected] = useState(iso(today));
 
@@ -69,7 +77,9 @@ export function CalendarScreen({ cycle }: { settings: SettingsRecord; cycle: Cyc
   const selLogged = logged.has(selected);
   const selDiff = differenceInCalendarDays(selDate, lastStart);
   const selDayInCycle = (((selDiff % cycleSettings.avgCycleLength) + cycleSettings.avgCycleLength) % cycleSettings.avgCycleLength) + 1;
-  const selPhase = PHASES[phaseForDay(selDayInCycle, cycleSettings)];
+  const selPhaseId = phaseForDay(selDayInCycle, cycleSettings);
+  const selPhase = PHASES[selPhaseId];
+  const selGuide = PHASE_GUIDANCE[selPhaseId];
 
   return (
     <>
@@ -120,7 +130,9 @@ export function CalendarScreen({ cycle }: { settings: SettingsRecord; cycle: Cyc
                     ? { background: 'var(--color-menstrual)', color: 'var(--color-void)', fontWeight: 600 }
                     : isPredPeriod
                       ? { boxShadow: 'inset 0 0 0 1.3px color-mix(in srgb, var(--color-menstrual) 60%, transparent)', color: 'var(--color-menstrual)' }
-                      : undefined
+                      : inMonth
+                        ? { background: `color-mix(in srgb, ${PHASES[phaseOf(d)].color} 12%, transparent)` }
+                        : undefined
                 }
               >
                 <span>{format(d, 'd')}</span>
@@ -159,6 +171,18 @@ export function CalendarScreen({ cycle }: { settings: SettingsRecord; cycle: Cyc
           {isSameDay(selDate, today) ? (
             <span className="rounded-full border border-hairline px-2.5 py-1 text-[11px] text-muted">Hoje</span>
           ) : null}
+        </div>
+
+        <p className="mt-3 text-[13px] leading-relaxed text-muted">{selGuide.whatsHappening}</p>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {selGuide.symptoms.slice(0, 5).map((s) => (
+            <span
+              key={s}
+              className="rounded-full border border-hairline px-2.5 py-1 text-[11.5px] text-muted"
+            >
+              {s}
+            </span>
+          ))}
         </div>
 
         {selFuture ? (
