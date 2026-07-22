@@ -15,6 +15,36 @@ export interface PhaseGuidance {
 }
 
 /**
+ * What the PARTNER sees. Deliberately written as "how to support her", not as a
+ * readout of her data — this is what keeps the shared link an act of care
+ * instead of surveillance.
+ */
+export const PARTNER_SUPPORT: Record<PhaseId, string[]> = {
+  menstrual: [
+    'Ela pode estar com cólicas e bem cansada — calor (bolsa térmica) e paciência ajudam mais que conselho.',
+    'Assuma tarefas da casa sem ela precisar pedir.',
+    'Evite cobrar disposição ou planos que exijam muita energia.',
+    'Água, um analgésico e um cobertor resolvem muita coisa.',
+  ],
+  follicular: [
+    'A disposição costuma estar subindo — é uma boa fase para planos e programas novos.',
+    'Ótimo momento para atividade física e projetos a dois.',
+    'Ela tende a estar mais focada e comunicativa.',
+  ],
+  ovulatory: [
+    'Energia e libido costumam estar no pico.',
+    'Atenção: é o período de maior chance de gravidez. Se engravidar não estiver nos planos de vocês, usem proteção.',
+    'Bom momento para conversas importantes e programas mais animados.',
+  ],
+  luteal: [
+    'Nos dias finais pode aparecer TPM: irritabilidade, inchaço, cansaço e vontade de doce.',
+    'Não leve oscilações de humor para o lado pessoal.',
+    'Ofereça escuta, não soluções. Evite discussões e cobranças.',
+    'Ajude a manter a rotina leve e o sono em dia.',
+  ],
+};
+
+/**
  * Serious, clinical guidance per phase — what happens, what she may feel, and
  * what she can do. No mysticism. Content produced and medically verified by a
  * multi-agent workflow grounded in ACOG / Mayo Clinic / Cleveland Clinic.
