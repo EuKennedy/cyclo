@@ -172,7 +172,7 @@ export function CycleRing({ settings, status, size = 320, onSelectDay, children 
         </g>
 
         {/* Ovulation peak tick */}
-        <circle cx={ov.x} cy={ov.y} r={size * 0.012} fill="#fffaf0" opacity={0.95} />
+        <circle cx={ov.x} cy={ov.y} r={size * 0.012} fill="#ffffff" opacity={0.95} />
 
         {/* Blood drop marking menstruation */}
         <g

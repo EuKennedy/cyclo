@@ -7,27 +7,27 @@
    ========================================================================== */
 
 @theme {
-  /* Surfaces — warm near-black with a faint plum undertone */
-  --color-void: #0a090d;
-  --color-bg: #0e0c12;
-  --color-surface: #16131c;
-  --color-elevated: #1d1926;
-  --color-hairline: rgba(255, 255, 255, 0.07);
+  /* Surfaces — neutral near-black. No violet cast anywhere. */
+  --color-void: #08090c;
+  --color-bg: #0c0e12;
+  --color-surface: #14171d;
+  --color-elevated: #1b1f27;
+  --color-hairline: rgba(255, 255, 255, 0.08);
 
-  /* Ink — warm whites */
-  --color-ink: #f6f2f4;
-  --color-muted: #b0abb8;
-  --color-faint: #736e7d;
+  /* Ink — neutral whites and greys */
+  --color-ink: #f4f6f8;
+  --color-muted: #a8b0bb;
+  --color-faint: #6d7683;
 
-  /* Phase spectrum. Menstruation is a true blood red — it must read instantly. */
-  --color-menstrual: #e5484d;
-  --color-menstrual-deep: #9b1c21;
-  --color-follicular: #e79a6a;
-  --color-follicular-deep: #b3683c;
-  --color-ovulatory: #f2c879; /* champagne gold — the luminous peak */
-  --color-ovulatory-deep: #c79a46;
-  --color-luteal: #a98fd0;
-  --color-luteal-deep: #74539f;
+  /* Dopamine phase spectrum — saturated, joyful, instantly distinguishable. */
+  --color-menstrual: #ff2d46; /* dopamine red — menstruation */
+  --color-menstrual-deep: #b00d20;
+  --color-follicular: #20d67b; /* dopamine green — renewal, energy rising */
+  --color-follicular-deep: #0e8f50;
+  --color-ovulatory: #ff7a1a; /* dopamine orange — the fertile window */
+  --color-ovulatory-deep: #c24f05;
+  --color-luteal: #6cc5ff; /* soft light blue — the calmer luteal stretch */
+  --color-luteal-deep: #2b7fc4;
 
   /* Type — Montserrat everywhere */
   --font-sans: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
@@ -41,18 +41,18 @@
 @property --phase {
   syntax: '<color>';
   inherits: true;
-  initial-value: #a98fd0;
+  initial-value: #6cc5ff;
 }
 @property --phase-deep {
   syntax: '<color>';
   inherits: true;
-  initial-value: #74539f;
+  initial-value: #2b7fc4;
 }
 
 :root {
   color-scheme: dark;
-  --phase: #a98fd0;
-  --phase-deep: #74539f;
+  --phase: #6cc5ff;
+  --phase-deep: #2b7fc4;
   transition:
     --phase 0.6s var(--ease-out-expo),
     --phase-deep 0.6s var(--ease-out-expo);
