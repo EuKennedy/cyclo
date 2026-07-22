@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { addDays, format, subDays } from 'date-fns';
+import type { ReactNode } from 'react';
+import { addDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getCycleStatus } from '@/domain/cycle';
-import type { ConfidenceTier, CycleStatus } from '@/domain/types';
-import { PHASES, PHASE_HEX } from '@/lib/phases';
+import type { ConfidenceTier } from '@/domain/types';
+import { PHASES } from '@/lib/phases';
+import { PHASE_GUIDANCE } from '@/lib/phaseGuidance';
+import type { SettingsRecord } from '@/lib/db';
+import type { CycleState } from '@/lib/useCycle';
+import { CycleRing } from '@/components/CycleRing';
 
 const CONFIDENCE_LABEL: Record<ConfidenceTier, string> = {
   'very-high': 'Ótima',
@@ -14,128 +16,126 @@ const CONFIDENCE_LABEL: Record<ConfidenceTier, string> = {
   irregular: 'Irregular',
   insufficient: '—',
 };
-import type { SettingsRecord } from '@/lib/db';
-import type { CycleState } from '@/lib/useCycle';
-import { CycleRing } from '@/components/CycleRing';
 
 export function HomeScreen({ settings, cycle }: { settings: SettingsRecord; cycle: CycleState }) {
-  const { cycleSettings, status: realStatus, lastStart, today } = cycle;
-
-  const realDay = Math.min(realStatus.cycleDay, cycleSettings.avgCycleLength);
-  const [previewDay, setPreviewDay] = useState(realDay);
-  useEffect(() => setPreviewDay(realDay), [realDay]);
-  const exploring = previewDay !== realDay;
-
-  const status: CycleStatus = useMemo(() => {
-    if (!exploring) return realStatus;
-    return getCycleStatus(subDays(today, previewDay - 1), cycleSettings, today);
-  }, [exploring, previewDay, today, cycleSettings, realStatus]);
-
+  const { cycleSettings, status, lastStart, today } = cycle;
   const meta = PHASES[status.phase];
+  const guide = PHASE_GUIDANCE[status.phase];
   const firstName = settings.name.trim().split(/\s+/)[0] || 'você';
 
-  useEffect(() => {
-    const hex = PHASE_HEX[status.phase];
-    document.documentElement.style.setProperty('--phase', hex.color);
-    document.documentElement.style.setProperty('--phase-deep', hex.deep);
-  }, [status.phase]);
+  const fertileStart = addDays(lastStart, status.fertileWindow.startDay - 1);
+  const fertileEnd = addDays(lastStart, status.fertileWindow.endDay - 1);
 
-  const fertileStart = addDays(lastStart, realStatus.fertileWindow.startDay - 1);
-  const fertileEnd = addDays(lastStart, realStatus.fertileWindow.endDay - 1);
+  const hero =
+    status.phase === 'menstrual'
+      ? { big: `Dia ${status.cycleDay}`, label: 'da sua menstruação', sub: null }
+      : status.isLate
+        ? {
+            big: String(status.lateBy),
+            label: status.lateBy === 1 ? 'dia de atraso' : 'dias de atraso',
+            sub: 'Já começou? Registre na aba Registrar.',
+          }
+        : {
+            big: String(status.daysUntilNextPeriod),
+            label: status.daysUntilNextPeriod === 1 ? 'dia até a menstruação' : 'dias até a menstruação',
+            sub: `Prevista para ${format(status.nextPredictedStart, "d 'de' MMMM", { locale: ptBR })}`,
+          };
 
   return (
     <>
-      <header>
-        <div className="flex items-center justify-between">
-          <span className="text-display text-xl font-semibold tracking-tight">Cyclo</span>
-          <span className="text-[11px] uppercase tracking-[0.16em] text-faint">
-            {format(today, "EEE, d 'de' MMM", { locale: ptBR })}
-          </span>
-        </div>
-        <h1 className="text-display mt-4 text-[1.6rem] font-semibold leading-tight">Olá, {firstName}</h1>
-        <p className="mt-1 text-[0.95rem] text-muted">
-          {realStatus.isLate
-            ? `Sua menstruação está ${realStatus.lateBy} ${realStatus.lateBy === 1 ? 'dia' : 'dias'} atrasada.`
-            : `Você está no dia ${realStatus.cycleDay} do seu ciclo.`}
-        </p>
+      <header className="flex items-center justify-between">
+        <span className="text-display text-xl font-semibold tracking-tight">Cyclo</span>
+        <span className="text-[11px] uppercase tracking-[0.16em] text-faint">
+          {format(today, "EEE, d 'de' MMM", { locale: ptBR })}
+        </span>
       </header>
 
+      <p className="mt-4 text-[0.95rem] text-muted">Olá, {firstName}</p>
+
+      {/* Countdown hero — the clear headline */}
+      <section className="mt-2">
+        <div className="flex items-end gap-3">
+          <span className="text-display text-[4.6rem] font-bold leading-[0.85]" style={{ color: meta.color }}>
+            {hero.big}
+          </span>
+          <span className="mb-2 text-[1.05rem] leading-tight text-ink">{hero.label}</span>
+        </div>
+        {hero.sub ? <p className="mt-2 text-[13px] text-muted">{hero.sub}</p> : null}
+      </section>
+
+      {/* Ring */}
       <section className="mt-6 flex flex-col items-center">
-        <CycleRing settings={cycleSettings} status={status} size={318}>
-          <span className="text-[11px] uppercase tracking-[0.24em] text-muted">Dia</span>
-          <motion.span
-            key={status.cycleDay}
-            initial={{ y: 12, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="text-display text-[5.4rem] font-semibold leading-[0.9]"
-          >
-            {status.cycleDay}
-          </motion.span>
-          <span className="mt-1 text-sm text-muted">
+        <CycleRing settings={cycleSettings} status={status} size={300}>
+          <span className="text-[11px] uppercase tracking-[0.24em] text-muted">Dia do ciclo</span>
+          <span className="text-display text-[4.6rem] font-semibold leading-[0.9]">{status.cycleDay}</span>
+          <span className="mt-1 text-sm font-medium" style={{ color: meta.color }}>
             {meta.label}
-            {exploring ? ' · prévia' : ''}
           </span>
         </CycleRing>
-
-        <div className="mt-8 min-h-[112px] max-w-sm text-center">
-          <motion.div
-            key={status.phase}
-            initial={{ y: 14, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <h2 className="text-display text-[1.7rem] leading-tight">{meta.title}</h2>
-            <p className="mt-2.5 text-[0.95rem] leading-relaxed text-muted">{meta.line}</p>
-          </motion.div>
-        </div>
       </section>
 
-      <section className="mt-7">
-        <div className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-[0.14em] text-faint">
-          <span>Explorar o ciclo</span>
-          {exploring ? (
-            <button
-              onClick={() => setPreviewDay(realDay)}
-              className="rounded-full px-2 py-0.5 font-semibold"
-              style={{ color: 'var(--phase)' }}
+      {/* Serious phase guidance */}
+      <section className="glass mt-7 rounded-3xl p-5">
+        <div className="flex items-center justify-between">
+          <span className="text-[12px] uppercase tracking-[0.14em] text-faint">Você está na</span>
+          <span className="text-[15px] font-semibold" style={{ color: meta.color }}>
+            {guide.name} · {guide.dayRange}
+          </span>
+        </div>
+        <p className="mt-2.5 text-[0.95rem] leading-relaxed text-muted">{guide.whatsHappening}</p>
+
+        <SectionLabel>Sintomas comuns</SectionLabel>
+        <div className="flex flex-wrap gap-1.5">
+          {guide.symptoms.map((s) => (
+            <span
+              key={s}
+              className="rounded-full border border-hairline px-2.5 py-1 text-[12px] text-muted"
             >
-              Voltar para hoje
-            </button>
-          ) : (
-            <span>Dia {realDay} · hoje</span>
-          )}
+              {s}
+            </span>
+          ))}
         </div>
-        <input
-          type="range"
-          className="scrubber"
-          min={1}
-          max={cycleSettings.avgCycleLength}
-          value={previewDay}
-          aria-label="Explorar o dia do ciclo"
-          onChange={(e) => setPreviewDay(Number(e.target.value))}
-        />
+
+        <SectionLabel>O que ajuda</SectionLabel>
+        <ul className="space-y-1.5">
+          {guide.tips.map((t) => (
+            <li key={t} className="flex gap-2 text-[13px] leading-snug text-muted">
+              <span style={{ color: meta.color }}>•</span>
+              <span>{t}</span>
+            </li>
+          ))}
+        </ul>
+
+        {guide.fertilityNote ? (
+          <p className="mt-4 rounded-xl bg-white/[0.03] p-3 text-[12px] leading-relaxed text-faint">
+            {guide.fertilityNote}
+          </p>
+        ) : null}
       </section>
 
-      <section className="mt-7 grid grid-cols-2 gap-3">
-        <InfoCard
-          label="Próxima menstruação"
-          value={
-            realStatus.daysUntilNextPeriod > 0
-              ? `em ${realStatus.daysUntilNextPeriod} ${realStatus.daysUntilNextPeriod === 1 ? 'dia' : 'dias'}`
-              : realStatus.isLate
-                ? `${realStatus.lateBy} ${realStatus.lateBy === 1 ? 'dia' : 'dias'} de atraso`
-                : 'hoje'
-          }
-          sub={format(realStatus.nextPredictedStart, "d 'de' MMMM", { locale: ptBR })}
-        />
-        <InfoCard
-          label="Janela fértil"
-          value={`dias ${realStatus.fertileWindow.startDay}–${realStatus.fertileWindow.endDay}`}
-          sub={`${format(fertileStart, "d 'de' MMM", { locale: ptBR })} – ${format(fertileEnd, "d 'de' MMM", { locale: ptBR })}`}
-        />
+      {/* Fertile window */}
+      <section className="glass mt-4 rounded-[22px] p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.16em] text-faint">Período fértil</p>
+            <p className="text-display mt-1 text-lg leading-tight">
+              {format(fertileStart, "d 'de' MMM", { locale: ptBR })} –{' '}
+              {format(fertileEnd, "d 'de' MMM", { locale: ptBR })}
+            </p>
+          </div>
+          <span
+            className="rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.1em]"
+            style={{
+              color: 'var(--color-ovulatory)',
+              background: 'color-mix(in srgb, var(--color-ovulatory) 14%, transparent)',
+            }}
+          >
+            {status.isFertile ? 'Fértil agora' : `Ovulação dia ${status.ovulationDay}`}
+          </span>
+        </div>
       </section>
 
+      {/* History / confidence */}
       <section className="glass mt-4 rounded-[22px] p-4">
         <p className="text-[10px] uppercase tracking-[0.16em] text-faint">Seu histórico</p>
         <div className="mt-3 grid grid-cols-3 gap-2 text-center">
@@ -148,7 +148,7 @@ export function HomeScreen({ settings, cycle }: { settings: SettingsRecord; cycl
         </div>
         {cycle.estimate.usedFallback ? (
           <p className="mt-3 text-center text-[12px] leading-relaxed text-faint">
-            Registre mais ciclos e as previsões ficam cada vez mais suas.
+            Registre mais ciclos e as previsões ficam cada vez mais precisas.
           </p>
         ) : null}
       </section>
@@ -160,21 +160,15 @@ export function HomeScreen({ settings, cycle }: { settings: SettingsRecord; cycl
   );
 }
 
+function SectionLabel({ children }: { children: ReactNode }) {
+  return <p className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.12em] text-faint">{children}</p>;
+}
+
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div>
       <p className="text-display text-xl font-semibold leading-none">{value}</p>
       <p className="mt-1 text-[11px] text-faint">{label}</p>
-    </div>
-  );
-}
-
-function InfoCard({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div className="glass rounded-[22px] p-4">
-      <p className="text-[10px] uppercase tracking-[0.16em] text-faint">{label}</p>
-      <p className="text-display mt-1.5 text-lg capitalize leading-tight">{value}</p>
-      <p className="mt-0.5 text-[12px] text-muted">{sub}</p>
     </div>
   );
 }

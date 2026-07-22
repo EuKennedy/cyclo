@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PHASES } from '@/lib/phases';
+import { PHASE_GUIDANCE } from '@/lib/phaseGuidance';
 import { setPeriodFlow, togglePeriodDay, usePeriodLogs } from '@/lib/periods';
 import { setEnergy, toggleMood, toggleSymptom, useDailyLog } from '@/lib/dailyLog';
 import { ENERGY_LABELS, MOODS, SYMPTOMS } from '@/lib/logOptions';
@@ -23,6 +24,7 @@ export function LogScreen({ cycle }: { settings: SettingsRecord; cycle: CycleSta
   const loggedToday = (logs ?? []).find((l) => l.date === todayIso);
   const daily = useDailyLog(todayIso);
   const meta = PHASES[status.phase];
+  const guide = PHASE_GUIDANCE[status.phase];
 
   const moods = daily?.mood ?? [];
   const energy = daily?.energy ?? null;
@@ -39,12 +41,23 @@ export function LogScreen({ cycle }: { settings: SettingsRecord; cycle: CycleSta
 
       <Card>
         <div className="flex items-center justify-between">
-          <span className="text-[13px] uppercase tracking-[0.14em] text-faint">Hoje você está em</span>
-          <span className="text-display text-lg font-semibold" style={{ color: meta.color }}>
-            {meta.label}
+          <span className="text-[13px] uppercase tracking-[0.14em] text-faint">Hoje você está na</span>
+          <span className="text-[15px] font-semibold" style={{ color: meta.color }}>
+            {guide.name}
           </span>
         </div>
-        <p className="mt-2 text-[0.95rem] leading-relaxed text-muted">{meta.line}</p>
+        <p className="mt-2 text-[0.95rem] leading-relaxed text-muted">{guide.whatsHappening}</p>
+        <p className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.12em] text-faint">
+          O que ajuda hoje
+        </p>
+        <ul className="space-y-1.5">
+          {guide.tips.slice(0, 4).map((t) => (
+            <li key={t} className="flex gap-2 text-[13px] leading-snug text-muted">
+              <span style={{ color: meta.color }}>•</span>
+              <span>{t}</span>
+            </li>
+          ))}
+        </ul>
       </Card>
 
       <Card>
