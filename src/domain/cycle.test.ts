@@ -6,6 +6,7 @@ import {
   phaseForDay,
   cycleSegments,
   getCycleStatus,
+  isPmsDay,
 } from './cycle';
 
 const short: CycleSettings = { avgCycleLength: 22, avgPeriodLength: 6, lutealLength: 14 };
@@ -53,6 +54,21 @@ describe('cycle model — short 22-day cycle clamps safely', () => {
     for (let i = 1; i < segs.length; i++) {
       expect(segs[i]!.startDay).toBe(segs[i - 1]!.endDay + 1);
     }
+  });
+});
+
+describe('PMS window', () => {
+  it('covers the last five days of a 28-day cycle', () => {
+    expect(isPmsDay(24, DEFAULT_SETTINGS)).toBe(true);
+    expect(isPmsDay(28, DEFAULT_SETTINGS)).toBe(true);
+  });
+  it('excludes days before the window and beyond the cycle', () => {
+    expect(isPmsDay(23, DEFAULT_SETTINGS)).toBe(false);
+    expect(isPmsDay(29, DEFAULT_SETTINGS)).toBe(false);
+  });
+  it('never marks menstrual or fertile days as PMS', () => {
+    expect(isPmsDay(1, DEFAULT_SETTINGS)).toBe(false);
+    expect(isPmsDay(14, DEFAULT_SETTINGS)).toBe(false);
   });
 });
 

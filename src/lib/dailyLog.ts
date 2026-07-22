@@ -23,6 +23,7 @@ async function ensure(dateISO: string): Promise<DailyLogRecord> {
     mood: [],
     energy: null,
     symptoms: [],
+    sexualActivity: null,
     bbt: null,
     lhTest: null,
     notes: null,
@@ -45,6 +46,23 @@ export async function setEnergy(dateISO: string, energy: Energy): Promise<void> 
   const rec = await ensure(dateISO);
   await db.dailyLogs.update(rec.id, {
     energy: rec.energy === energy ? null : energy,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+/** Toggle "had sex" for a day. Protection is recorded separately, never inferred. */
+export async function toggleSexualActivity(dateISO: string): Promise<void> {
+  const rec = await ensure(dateISO);
+  await db.dailyLogs.update(rec.id, {
+    sexualActivity: rec.sexualActivity?.logged ? null : { logged: true, protected: null },
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+export async function setSexualProtection(dateISO: string, isProtected: boolean): Promise<void> {
+  const rec = await ensure(dateISO);
+  await db.dailyLogs.update(rec.id, {
+    sexualActivity: { logged: true, protected: rec.sexualActivity?.protected === isProtected ? null : isProtected },
     updatedAt: new Date().toISOString(),
   });
 }

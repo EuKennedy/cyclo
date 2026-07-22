@@ -54,6 +54,15 @@ export function cycleSegments(s: CycleSettings): PhaseSegment[] {
   return segs;
 }
 
+/** How many days before the period PMS symptoms typically show up. */
+export const PMS_WINDOW_DAYS = 5;
+
+/** True on the premenstrual (TPM) stretch at the tail of the luteal phase. */
+export function isPmsDay(day: number, s: CycleSettings): boolean {
+  const start = s.avgCycleLength - PMS_WINDOW_DAYS + 1;
+  return day >= start && day <= s.avgCycleLength && phaseForDay(day, s) === 'luteal';
+}
+
 /** 1-indexed cycle day for a date, given the last period's start (day 1 = first
  * day of bleeding). Values < 1 indicate a start date in the future. */
 export function currentCycleDay(lastPeriodStart: Date, today: Date = new Date()): number {
