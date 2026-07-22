@@ -3,8 +3,17 @@ import { motion } from 'framer-motion';
 import { addDays, format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getCycleStatus } from '@/domain/cycle';
-import type { CycleStatus } from '@/domain/types';
+import type { ConfidenceTier, CycleStatus } from '@/domain/types';
 import { PHASES, PHASE_HEX } from '@/lib/phases';
+
+const CONFIDENCE_LABEL: Record<ConfidenceTier, string> = {
+  'very-high': 'Ótima',
+  high: 'Alta',
+  moderate: 'Média',
+  low: 'Baixa',
+  irregular: 'Irregular',
+  insufficient: '—',
+};
 import type { SettingsRecord } from '@/lib/db';
 import type { CycleState } from '@/lib/useCycle';
 import { CycleRing } from '@/components/CycleRing';
@@ -127,10 +136,36 @@ export function HomeScreen({ settings, cycle }: { settings: SettingsRecord; cycl
         />
       </section>
 
+      <section className="glass mt-4 rounded-[22px] p-4">
+        <p className="text-[10px] uppercase tracking-[0.16em] text-faint">Seu histórico</p>
+        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+          <Stat value={String(cycle.starts.length)} label={cycle.starts.length === 1 ? 'ciclo' : 'ciclos'} />
+          <Stat
+            value={`${Math.round(cycle.estimate.usedFallback ? cycleSettings.avgCycleLength : cycle.estimate.avg)}d`}
+            label="ciclo médio"
+          />
+          <Stat value={CONFIDENCE_LABEL[cycle.estimate.confidence]} label="confiança" />
+        </div>
+        {cycle.estimate.usedFallback ? (
+          <p className="mt-3 text-center text-[12px] leading-relaxed text-faint">
+            Registre mais ciclos e as previsões ficam cada vez mais suas.
+          </p>
+        ) : null}
+      </section>
+
       <p className="mt-8 text-center text-[12px] leading-relaxed text-faint">
         Estimativas baseadas em médias — não são um método contraceptivo nem substituem orientação médica.
       </p>
     </>
+  );
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div>
+      <p className="text-display text-xl font-semibold leading-none">{value}</p>
+      <p className="mt-1 text-[11px] text-faint">{label}</p>
+    </div>
   );
 }
 
