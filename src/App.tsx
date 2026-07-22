@@ -1,6 +1,6 @@
 import { isOnboarded, useSettings } from '@/lib/settings';
 import { Onboarding } from '@/features/onboarding/Onboarding';
-import { Home } from '@/features/home/Home';
+import { AppShell } from '@/features/app/AppShell';
 
 export default function App() {
   const settings = useSettings();
@@ -18,5 +18,5 @@ export default function App() {
 
   if (!isOnboarded(settings)) return <Onboarding />;
 
-  return <Home settings={settings} />;
+  return <AppShell settings={settings} />;
 }

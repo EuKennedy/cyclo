@@ -1,33 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { addDays, format, parseISO, startOfDay, subDays } from 'date-fns';
+import { addDays, format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getCycleStatus } from '@/domain/cycle';
 import type { CycleStatus } from '@/domain/types';
 import { PHASES, PHASE_HEX } from '@/lib/phases';
-import { purgeAll, toCycleSettings } from '@/lib/settings';
 import type { SettingsRecord } from '@/lib/db';
-import { AuroraBackground } from '@/components/AuroraBackground';
+import type { CycleState } from '@/lib/useCycle';
 import { CycleRing } from '@/components/CycleRing';
 
-export function Home({ settings }: { settings: SettingsRecord }) {
-  const cycleSettings = useMemo(() => toCycleSettings(settings), [settings]);
-  const today = useMemo(() => startOfDay(new Date()), []);
-  const lastStart = useMemo(() => parseISO(settings.lastPeriodStart as string), [settings.lastPeriodStart]);
-
-  const realStatus = useMemo(
-    () => getCycleStatus(lastStart, cycleSettings, today),
-    [lastStart, cycleSettings, today],
-  );
+export function HomeScreen({ settings, cycle }: { settings: SettingsRecord; cycle: CycleState }) {
+  const { cycleSettings, status: realStatus, lastStart, today } = cycle;
 
   const realDay = Math.min(realStatus.cycleDay, cycleSettings.avgCycleLength);
   const [previewDay, setPreviewDay] = useState(realDay);
+  useEffect(() => setPreviewDay(realDay), [realDay]);
   const exploring = previewDay !== realDay;
 
   const status: CycleStatus = useMemo(() => {
     if (!exploring) return realStatus;
-    const synthetic = subDays(today, previewDay - 1);
-    return getCycleStatus(synthetic, cycleSettings, today);
+    return getCycleStatus(subDays(today, previewDay - 1), cycleSettings, today);
   }, [exploring, previewDay, today, cycleSettings, realStatus]);
 
   const meta = PHASES[status.phase];
@@ -42,27 +34,16 @@ export function Home({ settings }: { settings: SettingsRecord }) {
   const fertileStart = addDays(lastStart, realStatus.fertileWindow.startDay - 1);
   const fertileEnd = addDays(lastStart, realStatus.fertileWindow.endDay - 1);
 
-  const handleReset = async () => {
-    if (window.confirm('Isto apaga TODOS os seus dados deste dispositivo, de forma permanente. Continuar?')) {
-      await purgeAll();
-    }
-  };
-
   return (
-    <main className="relative flex min-h-dvh w-full flex-col items-center px-6 pb-14 pt-8">
-      <AuroraBackground />
-
-      {/* Header / greeting */}
-      <header className="w-full max-w-md">
+    <>
+      <header>
         <div className="flex items-center justify-between">
           <span className="text-display text-xl font-semibold tracking-tight">Cyclo</span>
           <span className="text-[11px] uppercase tracking-[0.16em] text-faint">
             {format(today, "EEE, d 'de' MMM", { locale: ptBR })}
           </span>
         </div>
-        <h1 className="text-display mt-4 text-[1.6rem] font-semibold leading-tight">
-          Olá, {firstName}
-        </h1>
+        <h1 className="text-display mt-4 text-[1.6rem] font-semibold leading-tight">Olá, {firstName}</h1>
         <p className="mt-1 text-[0.95rem] text-muted">
           {realStatus.isLate
             ? `Sua menstruação está ${realStatus.lateBy} ${realStatus.lateBy === 1 ? 'dia' : 'dias'} atrasada.`
@@ -70,9 +51,8 @@ export function Home({ settings }: { settings: SettingsRecord }) {
         </p>
       </header>
 
-      {/* Ring */}
       <section className="mt-6 flex flex-col items-center">
-        <CycleRing settings={cycleSettings} status={status} size={320}>
+        <CycleRing settings={cycleSettings} status={status} size={318}>
           <span className="text-[11px] uppercase tracking-[0.24em] text-muted">Dia</span>
           <motion.span
             key={status.cycleDay}
@@ -89,7 +69,6 @@ export function Home({ settings }: { settings: SettingsRecord }) {
           </span>
         </CycleRing>
 
-        {/* Phase narrative */}
         <div className="mt-8 min-h-[112px] max-w-sm text-center">
           <motion.div
             key={status.phase}
@@ -103,8 +82,7 @@ export function Home({ settings }: { settings: SettingsRecord }) {
         </div>
       </section>
 
-      {/* Explore scrubber */}
-      <section className="mt-7 w-full max-w-md">
+      <section className="mt-7">
         <div className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-[0.14em] text-faint">
           <span>Explorar o ciclo</span>
           {exploring ? (
@@ -130,8 +108,7 @@ export function Home({ settings }: { settings: SettingsRecord }) {
         />
       </section>
 
-      {/* Insight cards (always today's real prediction) */}
-      <section className="mt-7 grid w-full max-w-md grid-cols-2 gap-3">
+      <section className="mt-7 grid grid-cols-2 gap-3">
         <InfoCard
           label="Próxima menstruação"
           value={
@@ -150,16 +127,10 @@ export function Home({ settings }: { settings: SettingsRecord }) {
         />
       </section>
 
-      {/* Ethos / disclaimer */}
-      <footer className="mt-9 max-w-md space-y-2 text-center">
-        <p className="text-[12px] leading-relaxed text-faint">
-          Estimativas baseadas em médias — não são um método contraceptivo nem substituem orientação médica.
-        </p>
-        <button onClick={handleReset} className="text-[11px] text-faint/70 underline-offset-4 hover:underline">
-          Apagar meus dados deste dispositivo
-        </button>
-      </footer>
-    </main>
+      <p className="mt-8 text-center text-[12px] leading-relaxed text-faint">
+        Estimativas baseadas em médias — não são um método contraceptivo nem substituem orientação médica.
+      </p>
+    </>
   );
 }
 

@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { format } from 'date-fns';
+import { addDays, format, isAfter, parseISO, startOfDay } from 'date-fns';
 import { db, type SettingsRecord, type LifeStage, type CycleGoal } from './db';
 import { CYCLE } from '@/domain/constants';
 import type { CycleSettings } from '@/domain/types';
@@ -41,6 +41,33 @@ export async function saveOnboarding(input: OnboardingInput): Promise<void> {
     updatedAt: now,
   };
   await db.settings.put(record);
+
+  // Seed the onboarded last period as logged bleeding days (up to today), so the
+  // calendar reflects it and predictions derive uniformly from logged data.
+  const start = parseISO(input.lastPeriodStart);
+  const todayStart = startOfDay(new Date());
+  for (let i = 0; i < input.avgPeriodLength; i++) {
+    const day = addDays(start, i);
+    if (isAfter(startOfDay(day), todayStart)) break;
+    const iso = format(day, 'yyyy-MM-dd');
+    const exists = await db.periodLogs.where('date').equals(iso).first();
+    if (!exists) {
+      await db.periodLogs.add({
+        id: crypto.randomUUID(),
+        date: iso,
+        cycleId: null,
+        flow: 'medium',
+        isStartDay: i === 0,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+}
+
+/** Patch a subset of settings fields (e.g. from the Settings screen). */
+export async function updateSettings(patch: Partial<Omit<SettingsRecord, 'id'>>): Promise<void> {
+  await db.settings.update(USER_ID, { ...patch, updatedAt: new Date().toISOString() });
 }
 
 /** Wipe everything — a true local purge (no soft-delete). */
