@@ -1,9 +1,17 @@
+import { useEffect, useState } from 'react';
 import { NumberStepper } from '@/components/ui';
 import { purgeAll, updateSettings } from '@/lib/settings';
+import { formatBytes, getStorageStatus, type StorageStatus } from '@/lib/storage';
 import type { SettingsRecord } from '@/lib/db';
 import { SyncSection } from './SyncSection';
 
 export function SettingsScreen({ settings }: { settings: SettingsRecord }) {
+  const [storage, setStorage] = useState<StorageStatus | null>(null);
+
+  useEffect(() => {
+    void getStorageStatus().then(setStorage);
+  }, []);
+
   const handleReset = async () => {
     if (
       window.confirm(
@@ -61,9 +69,17 @@ export function SettingsScreen({ settings }: { settings: SettingsRecord }) {
       <section className="glass mt-4 rounded-3xl p-5">
         <p className="text-[12px] uppercase tracking-[0.14em] text-faint">Privacidade</p>
         <p className="mt-3 text-[13px] leading-relaxed text-muted">
-          🔒 Todos os seus dados ficam guardados apenas neste dispositivo. Nada é enviado para nenhum
-          servidor.
+          🔒 Todos os seus dados ficam guardados apenas neste dispositivo, neste navegador. Nada é
+          enviado para nenhum servidor.
         </p>
+        {storage ? (
+          <p className="mt-2 text-[12px] leading-relaxed text-faint">
+            {storage.persisted
+              ? 'Armazenamento protegido: o navegador não vai apagar seu histórico para liberar espaço.'
+              : 'Atenção: o navegador ainda pode apagar seus dados se ficar sem espaço. Instale o Cyclo na tela de início para proteger.'}
+            {storage.usage != null ? ` · ${formatBytes(storage.usage)} em uso.` : ''}
+          </p>
+        ) : null}
         <button
           type="button"
           onClick={handleReset}
