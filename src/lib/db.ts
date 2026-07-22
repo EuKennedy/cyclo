@@ -62,6 +62,12 @@ export interface SymptomEntry {
   intensity: 1 | 2 | 3;
 }
 
+/** Sexual activity is logged only if she chooses to; protection is never inferred. */
+export interface SexualActivityEntry {
+  logged: boolean;
+  protected: boolean | null;
+}
+
 export interface DailyLogRecord {
   id: string;
   date: string;
@@ -70,6 +76,7 @@ export interface DailyLogRecord {
   mood: string[];
   energy: 1 | 2 | 3 | 4 | 5 | null;
   symptoms: SymptomEntry[];
+  sexualActivity: SexualActivityEntry | null;
   bbt: number | null; // measurement — feeds luteal calibration
   lhTest: 'positive' | 'negative' | null;
   notes: string | null;

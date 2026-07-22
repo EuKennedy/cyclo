@@ -19,9 +19,9 @@
   --color-muted: #b0abb8;
   --color-faint: #736e7d;
 
-  /* Phase spectrum — one harmonious warm arc (no clashing neon) */
-  --color-menstrual: #db5a73;
-  --color-menstrual-deep: #9e3a50;
+  /* Phase spectrum. Menstruation is a true blood red — it must read instantly. */
+  --color-menstrual: #e5484d;
+  --color-menstrual-deep: #9b1c21;
   --color-follicular: #e79a6a;
   --color-follicular-deep: #b3683c;
   --color-ovulatory: #f2c879; /* champagne gold — the luminous peak */
@@ -149,6 +149,16 @@ body {
   border-radius: 999px;
   background: var(--phase);
   border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+/* Collapsible body — smooth both ways, pure CSS (no exit animation needed) */
+.collapse-grid {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.32s var(--ease-out-expo);
+}
+.collapse-grid.is-open {
+  grid-template-rows: 1fr;
 }
 
 /* Text input */

@@ -1,4 +1,4 @@
-import { type ReactNode, useId } from 'react';
+import { useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { useStill } from '@/lib/motion';
 import { cycleSegments } from '@/domain/cycle';
@@ -11,21 +11,28 @@ const PHASE_STROKE: Record<PhaseId, string> = {
   luteal: 'var(--color-luteal)',
 };
 
+/** Solid blood-drop path, drawn in a 24×24 box. */
+const DROP_PATH = 'M12 3c3.6 4.1 6 7.2 6 10.2A6 6 0 0 1 6 13.2C6 10.2 8.4 7.1 12 3Z';
+
 interface CycleRingProps {
   settings: CycleSettings;
+  /** Status of the day currently being displayed (may be a scrubbed day). */
   status: CycleStatus;
   size?: number;
+  /** When provided, the ring becomes interactive: tap or drag to scrub days. */
+  onSelectDay?: (day: number) => void;
   children?: ReactNode;
 }
 
 /**
- * The cycle dial — the app's spatial spine. Renders the four phase arcs
- * proportionally, a luminous fertile sub-band, an ovulation peak tick, and a
- * glowing marker that springs to the current cycle day. Day 1 sits at the top.
+ * The cycle dial. Day 1 sits at the top and the cycle runs clockwise. When
+ * `onSelectDay` is given you can tap anywhere on the ring or drag the handle to
+ * travel through the cycle.
  */
-export function CycleRing({ settings, status, size = 320, children }: CycleRingProps) {
+export function CycleRing({ settings, status, size = 320, onSelectDay, children }: CycleRingProps) {
   const reduce = useStill();
-  const uid = useId();
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [dragging, setDragging] = useState(false);
 
   const stroke = size * 0.05;
   const cx = size / 2;
@@ -34,48 +41,98 @@ export function CycleRing({ settings, status, size = 320, children }: CycleRingP
   const circ = 2 * Math.PI * r;
   const n = status.cycleLength;
   const gapPx = 6;
+  const interactive = typeof onSelectDay === 'function';
 
   const segs = cycleSegments(settings);
 
-  // Marker position (−90° origin so day 1 is at the top).
-  const markerAngle = ((status.cycleDay - 0.5) / n) * 2 * Math.PI - Math.PI / 2;
-  const mx = cx + r * Math.cos(markerAngle);
-  const my = cy + r * Math.sin(markerAngle);
+  const angleFor = (day: number) => ((day - 0.5) / n) * 2 * Math.PI - Math.PI / 2;
+  const pointOn = (radius: number, day: number) => ({
+    x: cx + radius * Math.cos(angleFor(day)),
+    y: cy + radius * Math.sin(angleFor(day)),
+  });
 
-  // Fertile sub-band geometry (inner, thinner arc).
+  const marker = pointOn(r, status.cycleDay);
   const fertR = r - stroke * 0.9;
   const fertCirc = 2 * Math.PI * fertR;
   const fw = status.fertileWindow;
   const fertFrac = (fw.endDay - fw.startDay + 1) / n;
   const fertStartFrac = (fw.startDay - 1) / n;
+  const ov = pointOn(fertR, status.ovulationDay);
 
-  // Ovulation peak tick.
-  const ovAngle = ((status.ovulationDay - 0.5) / n) * 2 * Math.PI - Math.PI / 2;
-  const ox = cx + fertR * Math.cos(ovAngle);
-  const oy = cy + fertR * Math.sin(ovAngle);
+  // Blood drop sits just outside the middle of the menstrual arc.
+  const menstrualMid = (1 + settings.avgPeriodLength) / 2;
+  const dropAt = pointOn(r + stroke * 0.95, menstrualMid);
+  const dropScale = (size * 0.085) / 24;
+
+  /** Map a pointer position to a cycle day. Returns null near the centre. */
+  const dayFromPointer = (e: ReactPointerEvent<SVGSVGElement>): number | null => {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const rect = svg.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    const x = ((e.clientX - rect.left) / rect.width) * size;
+    const y = ((e.clientY - rect.top) / rect.height) * size;
+    const dx = x - cx;
+    const dy = y - cy;
+    if (Math.hypot(dx, dy) < r * 0.52) return null; // protect the centre readout
+    let frac = (Math.atan2(dy, dx) + Math.PI / 2) / (2 * Math.PI);
+    frac = ((frac % 1) + 1) % 1;
+    return Math.min(n, Math.max(1, Math.floor(frac * n) + 1));
+  };
+
+  const handleDown = (e: ReactPointerEvent<SVGSVGElement>) => {
+    if (!interactive) return;
+    const day = dayFromPointer(e);
+    if (day == null) return;
+    setDragging(true);
+    try {
+      svgRef.current?.setPointerCapture(e.pointerId);
+    } catch {
+      /* pointer id not capturable (e.g. synthetic events) — dragging still works */
+    }
+    onSelectDay?.(day);
+  };
+
+  const handleMove = (e: ReactPointerEvent<SVGSVGElement>) => {
+    if (!interactive || !dragging) return;
+    const day = dayFromPointer(e);
+    if (day != null) onSelectDay?.(day);
+  };
+
+  const endDrag = (e: ReactPointerEvent<SVGSVGElement>) => {
+    if (!dragging) return;
+    setDragging(false);
+    try {
+      svgRef.current?.releasePointerCapture(e.pointerId);
+    } catch {
+      /* pointer already released */
+    }
+  };
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <motion.svg
+        ref={svgRef}
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
-        initial={reduce ? false : { opacity: 0, scale: 0.94, rotate: -8 }}
-        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+        initial={reduce ? false : { opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+        onPointerDown={handleDown}
+        onPointerMove={handleMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        style={interactive ? { touchAction: 'none', cursor: dragging ? 'grabbing' : 'pointer' } : undefined}
+        role={interactive ? 'slider' : undefined}
+        aria-label={interactive ? 'Navegar pelos dias do ciclo' : undefined}
+        aria-valuemin={interactive ? 1 : undefined}
+        aria-valuemax={interactive ? n : undefined}
+        aria-valuenow={interactive ? status.cycleDay : undefined}
       >
-        {/* Faint full track */}
-        <circle
-          cx={cx}
-          cy={cy}
-          r={r}
-          fill="none"
-          stroke="rgba(255,255,255,0.06)"
-          strokeWidth={stroke}
-        />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} />
 
         <g transform={`rotate(-90 ${cx} ${cy})`}>
-          {/* Phase arcs */}
           {segs.map((seg) => {
             const frac = (seg.endDay - seg.startDay + 1) / n;
             const startFrac = (seg.startDay - 1) / n;
@@ -98,7 +155,7 @@ export function CycleRing({ settings, status, size = 320, children }: CycleRingP
             );
           })}
 
-          {/* Fertile sub-band (inner, luminous, dashed) */}
+          {/* Fertile sub-band */}
           <circle
             cx={cx}
             cy={cy}
@@ -115,38 +172,40 @@ export function CycleRing({ settings, status, size = 320, children }: CycleRingP
         </g>
 
         {/* Ovulation peak tick */}
-        <circle cx={ox} cy={oy} r={size * 0.012} fill="#eafff8" opacity={0.9} />
+        <circle cx={ov.x} cy={ov.y} r={size * 0.012} fill="#fffaf0" opacity={0.95} />
 
-        {/* Current-day marker with halo */}
+        {/* Blood drop marking menstruation */}
+        <g
+          transform={`translate(${dropAt.x}, ${dropAt.y}) scale(${dropScale}) translate(-12, -12)`}
+          style={{ filter: 'drop-shadow(0 0 5px color-mix(in srgb, var(--color-menstrual) 70%, transparent))' }}
+        >
+          <path d={DROP_PATH} fill="var(--color-menstrual)" />
+        </g>
+
+        {/* Draggable day handle */}
         <motion.circle
-          cx={mx}
-          cy={my}
-          r={size * 0.008}
+          cx={marker.x}
+          cy={marker.y}
+          r={size * 0.03}
           fill="var(--phase)"
-          opacity={0.35}
-          animate={{ cx: mx, cy: my }}
-          transition={
-            reduce ? { duration: 0 } : { type: 'spring', stiffness: 90, damping: 15 }
-          }
-          style={{ filter: 'blur(6px)' }}
-          key={`${uid}-halo`}
+          opacity={0.32}
+          animate={{ cx: marker.x, cy: marker.y }}
+          transition={reduce || dragging ? { duration: 0 } : { type: 'spring', stiffness: 260, damping: 24 }}
+          style={{ filter: 'blur(5px)' }}
         />
         <motion.circle
-          cx={mx}
-          cy={my}
-          r={size * 0.026}
+          cx={marker.x}
+          cy={marker.y}
+          r={size * (dragging ? 0.032 : 0.027)}
           fill="#ffffff"
           stroke="var(--phase)"
-          strokeWidth={size * 0.012}
-          animate={{ cx: mx, cy: my }}
-          transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 16 }}
-          style={{
-            filter: 'drop-shadow(0 2px 10px color-mix(in srgb, var(--phase) 70%, transparent))',
-          }}
+          strokeWidth={size * 0.013}
+          animate={{ cx: marker.x, cy: marker.y }}
+          transition={reduce || dragging ? { duration: 0 } : { type: 'spring', stiffness: 260, damping: 24 }}
+          style={{ filter: 'drop-shadow(0 2px 10px color-mix(in srgb, var(--phase) 70%, transparent))' }}
         />
       </motion.svg>
 
-      {/* Center content */}
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
         {children}
       </div>
