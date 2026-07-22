@@ -1,6 +1,7 @@
 import { NumberStepper } from '@/components/ui';
 import { purgeAll, updateSettings } from '@/lib/settings';
 import type { SettingsRecord } from '@/lib/db';
+import { SyncSection } from './SyncSection';
 
 export function SettingsScreen({ settings }: { settings: SettingsRecord }) {
   const handleReset = async () => {
@@ -54,6 +55,8 @@ export function SettingsScreen({ settings }: { settings: SettingsRecord }) {
           </div>
         </div>
       </section>
+
+      <SyncSection />
 
       <section className="glass mt-4 rounded-3xl p-5">
         <p className="text-[12px] uppercase tracking-[0.14em] text-faint">Privacidade</p>
