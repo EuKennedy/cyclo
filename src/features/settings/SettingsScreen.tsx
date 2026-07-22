@@ -3,9 +3,11 @@ import { NumberStepper } from '@/components/ui';
 import { purgeAll, updateSettings } from '@/lib/settings';
 import { formatBytes, getStorageStatus, type StorageStatus } from '@/lib/storage';
 import type { SettingsRecord } from '@/lib/db';
+import type { CycleState } from '@/lib/useCycle';
 import { SyncSection } from './SyncSection';
+import { PartnerShareSection } from './PartnerShareSection';
 
-export function SettingsScreen({ settings }: { settings: SettingsRecord }) {
+export function SettingsScreen({ settings, cycle }: { settings: SettingsRecord; cycle: CycleState }) {
   const [storage, setStorage] = useState<StorageStatus | null>(null);
 
   useEffect(() => {
@@ -65,6 +67,8 @@ export function SettingsScreen({ settings }: { settings: SettingsRecord }) {
       </section>
 
       <SyncSection />
+
+      <PartnerShareSection settings={settings} lastStart={cycle.lastStart} />
 
       <section className="glass mt-4 rounded-3xl p-5">
         <p className="text-[12px] uppercase tracking-[0.14em] text-faint">Privacidade</p>

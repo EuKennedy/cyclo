@@ -15,6 +15,16 @@ export type FlowLevel = 'spotting' | 'light' | 'medium' | 'heavy';
 export type LifeStage = 'adolescent' | 'adult' | 'perimenopause';
 export type CycleGoal = 'track' | 'understand' | 'conceive';
 
+/** The active partner-share link. The key is kept ONLY on her device so the app
+ * can refresh the shared summary; it is never uploaded. */
+export interface PartnerShareRef {
+  token: string;
+  /** base64url AES key — the same value that lives in the link fragment. */
+  key: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
 export interface SettingsRecord {
   id: 'user';
   /* Personal basics — stored ONLY on this device (local-first). */
@@ -28,6 +38,7 @@ export interface SettingsRecord {
   lutealLengthOverride: number | null;
   lifeStage: LifeStage;
   goal: CycleGoal;
+  partnerShare?: PartnerShareRef | null;
   onboardedAt: string | null;
   createdAt: string;
   updatedAt: string;

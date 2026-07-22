@@ -36,6 +36,35 @@ function fromBase64(b64: string): Uint8Array<ArrayBuffer> {
   return out;
 }
 
+function toBase64Url(bytes: Uint8Array): string {
+  return toBase64(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function fromBase64Url(value: string): Uint8Array<ArrayBuffer> {
+  const b64 = value.replace(/-/g, '+').replace(/_/g, '/');
+  return fromBase64(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
+}
+
+/**
+ * A fresh random key for one partner-share link. It is NOT derived from the
+ * user's passphrase — a shared link must never be able to unlock her own data.
+ * The exported key travels only in the URL fragment, which browsers never send
+ * to a server.
+ */
+export async function generateShareKey(): Promise<{ key: CryptoKey; exported: string }> {
+  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
+    'encrypt',
+    'decrypt',
+  ]);
+  const raw = new Uint8Array(await crypto.subtle.exportKey('raw', key));
+  return { key, exported: toBase64Url(raw) };
+}
+
+/** Rebuild a share key from the fragment. Decrypt-only on the partner's side. */
+export async function importShareKey(exported: string, usages: KeyUsage[] = ['decrypt']) {
+  return crypto.subtle.importKey('raw', fromBase64Url(exported), { name: 'AES-GCM' }, false, usages);
+}
+
 /** Derive the AES-GCM key from the user's passphrase. Non-extractable. */
 export async function deriveKey(passphrase: string, salt: string): Promise<CryptoKey> {
   const baseKey = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, [
