@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 import { db, type PartnerShareRef, type SettingsRecord } from './db';
 import { decryptJSON, encryptJSON, generateShareKey, importShareKey } from './crypto';
 import { USER_ID } from './settings';
-import { getUser } from './sync';
+import { ensureSession, getUser } from './sync';
 import { CYCLE } from '@/domain/constants';
 
 /**
@@ -48,9 +48,8 @@ export function buildSharePayload(settings: SettingsRecord, lastStart: Date): Sh
 }
 
 export async function createPartnerShare(payload: SharePayload): Promise<PartnerShareRef> {
-  if (!supabase) throw new Error('O compartilhamento precisa do backup na nuvem configurado.');
-  const user = await getUser();
-  if (!user) throw new Error('Entre com seu e-mail em "Backup na nuvem" para gerar o link.');
+  if (!supabase) throw new Error('O compartilhamento não está disponível neste momento.');
+  const user = await ensureSession();
 
   const { key, exported } = await generateShareKey();
   const envelope = await encryptJSON(key, payload);
@@ -81,6 +80,9 @@ export async function createPartnerShare(payload: SharePayload): Promise<Partner
 /** Keep the shared summary current. Safe to call on every app open. */
 export async function refreshPartnerShare(ref: PartnerShareRef, payload: SharePayload): Promise<void> {
   if (!supabase) return;
+  // Only the owning session can update the row; skip quietly otherwise so we
+  // never mint stray anonymous users just to refresh.
+  if (!(await getUser())) return;
   const key = await importShareKey(ref.key, ['encrypt']);
   const envelope = await encryptJSON(key, payload);
   await supabase

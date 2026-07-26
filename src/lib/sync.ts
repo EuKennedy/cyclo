@@ -75,6 +75,22 @@ export async function signOut(): Promise<void> {
   await supabase?.auth.signOut();
 }
 
+/**
+ * Guarantee a session without demanding an email login. Used by partner sharing:
+ * if she is already signed in (email sync), reuse it; otherwise create a
+ * lightweight anonymous session so the share has an owner for RLS. One tap, no
+ * inbox required.
+ */
+export async function ensureSession(): Promise<User> {
+  const client = requireClient();
+  const existing = await getUser();
+  if (existing) return existing;
+  const { data, error } = await client.auth.signInAnonymously();
+  if (error) throw error;
+  if (!data.user) throw new Error('Não foi possível iniciar a sessão de compartilhamento.');
+  return data.user;
+}
+
 /* ------------------------------------------------------------------ sync --- */
 
 export interface SyncResult {

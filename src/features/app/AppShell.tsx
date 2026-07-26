@@ -14,7 +14,13 @@ import type { SettingsRecord } from '@/lib/db';
 
 export function AppShell({ settings }: { settings: SettingsRecord }) {
   const [tab, setTab] = useState<Tab>('home');
+  const [logDate, setLogDate] = useState<Date | null>(null);
   const cycle = useCycleState(settings);
+
+  const pickDay = (d: Date) => {
+    setLogDate(d);
+    setTab('log');
+  };
 
   // Aurora follows today's real phase; Home overrides it while scrubbing.
   useEffect(() => {
@@ -40,12 +46,20 @@ export function AppShell({ settings }: { settings: SettingsRecord }) {
       <AuroraBackground />
       <div className="mx-auto max-w-md px-6 pb-32 pt-8">
         {tab === 'home' && <HomeScreen settings={settings} cycle={cycle} />}
-        {tab === 'calendar' && <CalendarScreen settings={settings} cycle={cycle} />}
-        {tab === 'log' && <LogScreen settings={settings} cycle={cycle} />}
+        {tab === 'calendar' && (
+          <CalendarScreen settings={settings} cycle={cycle} onPickDay={pickDay} />
+        )}
+        {tab === 'log' && <LogScreen settings={settings} cycle={cycle} initialDate={logDate} />}
         {tab === 'analysis' && <AnalysisScreen settings={settings} cycle={cycle} />}
         {tab === 'settings' && <SettingsScreen settings={settings} cycle={cycle} />}
       </div>
-      <TabBar active={tab} onChange={setTab} />
+      <TabBar
+        active={tab}
+        onChange={(t) => {
+          if (t === 'log') setLogDate(null);
+          setTab(t);
+        }}
+      />
     </div>
   );
 }
