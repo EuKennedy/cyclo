@@ -20,6 +20,7 @@ export default defineConfig(({ command }) => ({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: false,
       includeAssets: ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Cyclo — seu ciclo, com clareza',
@@ -41,6 +42,10 @@ export default defineConfig(({ command }) => ({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
         cleanupOutdatedCaches: true,
+        // Take over immediately so a new deploy applies on the next load instead
+        // of waiting for every tab to close (which left users stuck on old builds).
+        clientsClaim: true,
+        skipWaiting: true,
       },
     }),
   ],
