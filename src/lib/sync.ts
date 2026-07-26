@@ -50,25 +50,35 @@ export async function getUser(): Promise<User | null> {
   return data.user ?? null;
 }
 
-/** Email one-time code — avoids passwords and redirect URLs entirely. */
-export async function sendLoginCode(email: string): Promise<void> {
+/**
+ * Email + passphrase backup — NO email is ever sent. The email is only an
+ * account identifier; the passphrase authenticates and (separately, via
+ * PBKDF2) derives the client-side encryption key. First use creates the account
+ * and signs in; another device signs in with the same email + passphrase.
+ *
+ * This deliberately avoids magic links / one-time codes, which on a free static
+ * PWA are unreliable (rate-limited built-in email, non-editable templates,
+ * redirect-URL pitfalls).
+ */
+export async function signInWithPassphrase(
+  email: string,
+  passphrase: string,
+): Promise<{ user: User; isNew: boolean }> {
   const client = requireClient();
-  const { error } = await client.auth.signInWithOtp({
-    email: email.trim(),
-    options: { shouldCreateUser: true },
-  });
-  if (error) throw error;
-}
+  const e = email.trim().toLowerCase();
 
-export async function verifyLoginCode(email: string, token: string): Promise<User | null> {
-  const client = requireClient();
-  const { data, error } = await client.auth.verifyOtp({
-    email: email.trim(),
-    token: token.trim(),
-    type: 'email',
-  });
-  if (error) throw error;
-  return data.user ?? null;
+  // Existing account → this is a (re)connect, likely a restore on a new device.
+  const signIn = await client.auth.signInWithPassword({ email: e, password: passphrase });
+  if (signIn.data?.user) return { user: signIn.data.user, isNew: false };
+
+  // Supabase can't distinguish "no such user" from "wrong password", so try to
+  // create the account. With email confirmation off, a brand-new signup returns
+  // a live session; an existing email returns a user with no session — meaning
+  // the account exists and the passphrase was simply wrong.
+  const signUp = await client.auth.signUp({ email: e, password: passphrase });
+  if (signUp.error) throw signUp.error;
+  if (signUp.data.session && signUp.data.user) return { user: signUp.data.user, isNew: true };
+  throw new Error('Senha incorreta para este e-mail.');
 }
 
 export async function signOut(): Promise<void> {
@@ -107,19 +117,27 @@ async function collectLocal(): Promise<Array<{ type: SyncItemType; record: Synca
   return out;
 }
 
-/** Write the remote record locally when it is strictly newer. */
-async function mergeLocal(type: SyncItemType, remote: SyncableRecord): Promise<boolean> {
+/** Write the remote record locally when it is strictly newer (or on overwrite). */
+async function mergeLocal(
+  type: SyncItemType,
+  remote: SyncableRecord,
+  overwrite: boolean,
+): Promise<boolean> {
   const t = table(type);
   const local = await t.get(remote.id);
-  if (!local || (remote.updatedAt ?? '') > (local.updatedAt ?? '')) {
+  if (overwrite || !local || (remote.updatedAt ?? '') > (local.updatedAt ?? '')) {
     await t.put(remote);
     return true;
   }
   return false;
 }
 
-/** Full two-way sync: pull-and-merge, then push everything back encrypted. */
-export async function syncNow(passphrase: string): Promise<SyncResult> {
+/** Full two-way sync: pull-and-merge, then push everything back encrypted. When
+ * `overwrite` is set (restoring on a new device) the cloud copy always wins. */
+export async function syncNow(
+  passphrase: string,
+  opts: { overwrite?: boolean } = {},
+): Promise<SyncResult> {
   const client = requireClient();
   const user = await getUser();
   if (!user) throw new Error('Entre com seu e-mail para sincronizar.');
@@ -145,7 +163,7 @@ export async function syncNow(passphrase: string): Promise<SyncResult> {
       ciphertext: row.ciphertext as string,
       nonce: row.nonce as string,
     });
-    if (await mergeLocal(type, record)) pulled++;
+    if (await mergeLocal(type, record, opts.overwrite ?? false)) pulled++;
   }
 
   // ---- push
