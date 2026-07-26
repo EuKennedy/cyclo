@@ -13,7 +13,13 @@ export function SyncSection() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isSyncConfigured) void getUser().then(setUser).catch(() => undefined);
+    // An anonymous session (created by partner sharing) is NOT a backup account —
+    // only a real email user counts as "connected" here.
+    if (isSyncConfigured) {
+      void getUser()
+        .then((u) => setUser(u && !u.is_anonymous ? u : null))
+        .catch(() => undefined);
+    }
   }, []);
 
   if (!isSyncConfigured) {
