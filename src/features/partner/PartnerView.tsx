@@ -72,7 +72,7 @@ export function PartnerView({ token, shareKey }: { token: string; shareKey: stri
         <span className="text-display text-2xl font-semibold tracking-tight">Cyclo</span>
         <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-muted">{state.message}</p>
         <p className="mt-6 max-w-sm text-[12px] leading-relaxed text-faint">
-          Links compartilhados expiram e podem ser revogados a qualquer momento por quem os criou.
+          Links compartilhados podem ser revogados a qualquer momento por quem os criou.
         </p>
       </div>
     );
@@ -166,7 +166,7 @@ export function PartnerView({ token, shareKey }: { token: string; shareKey: stri
             compartilhados.
           </p>
           <p className="text-[11px] leading-relaxed text-faint/70">
-            Este link expira e pode ser revogado por {name} a qualquer momento.
+            Este link é permanente, mas pode ser revogado por {name} a qualquer momento.
           </p>
         </footer>
       </div>

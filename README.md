@@ -40,8 +40,8 @@ código. Isso é regra do modelo, não aviso na tela — está em
 
 ## Compartilhar com o parceiro, sem entregar o diário
 
-A parte que mais deu trabalho de projetar. O link é opcional, expira em 90 dias
-e pode ser revogado a qualquer momento.
+A parte que mais deu trabalho de projetar. O link é opcional, permanente — não
+expira — e pode ser revogado a qualquer momento.
 
 O que viaja é só a semente do ciclo: primeiro nome, data da última menstruação e
 as médias de duração. **Sintoma, humor, anotação e atividade sexual nunca saem.**

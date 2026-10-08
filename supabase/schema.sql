@@ -76,7 +76,7 @@ create trigger sync_items_touch
   for each row execute function public.touch_updated_at();
 
 -- 4. Partner sharing --------------------------------------------------------
--- An opt-in, revocable, expiring link that lets a partner see a SUMMARY of the
+-- An opt-in, revocable, permanent link that lets a partner see a SUMMARY of the
 -- cycle (phase, countdown, fertile window, how to support) — never symptoms,
 -- moods, notes or sexual activity.
 --
@@ -85,19 +85,26 @@ create trigger sync_items_touch
 -- only in the URL *fragment* and is therefore never sent to any server.
 -- The stored payload is the cycle "seed" (start date + lengths), so the partner
 -- view recomputes today's phase locally and the link stays accurate over time.
+-- Links never expire: `expires_at` is 'infinity', which always passes the
+-- `expires_at > now()` check in get_partner_share. Only revoking ends a link.
 
 create table if not exists public.partner_shares (
   token       uuid        primary key default gen_random_uuid(),
   user_id     uuid        not null references auth.users (id) on delete cascade,
   ciphertext  text        not null,
   nonce       text        not null,
-  expires_at  timestamptz not null,
+  expires_at  timestamptz not null default 'infinity',
   revoked     boolean     not null default false,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
 
 create index if not exists partner_shares_user_idx on public.partner_shares (user_id);
+
+-- Databases created when links expired after 90 days: make every existing link
+-- permanent too (this also revives ones that already lapsed). Idempotent.
+alter table public.partner_shares alter column expires_at set default 'infinity';
+update public.partner_shares set expires_at = 'infinity' where expires_at <> 'infinity';
 
 alter table public.partner_shares enable row level security;
 

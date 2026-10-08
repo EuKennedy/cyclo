@@ -15,13 +15,13 @@ export type FlowLevel = 'spotting' | 'light' | 'medium' | 'heavy';
 export type LifeStage = 'adolescent' | 'adult' | 'perimenopause';
 export type CycleGoal = 'track' | 'understand' | 'conceive';
 
-/** The active partner-share link. The key is kept ONLY on her device so the app
- * can refresh the shared summary; it is never uploaded. */
+/** The active partner-share link — permanent until she revokes it. The key is
+ * kept ONLY on her device so the app can refresh the shared summary; it is
+ * never uploaded. */
 export interface PartnerShareRef {
   token: string;
   /** base64url AES key — the same value that lives in the link fragment. */
   key: string;
-  expiresAt: string;
   createdAt: string;
 }
 

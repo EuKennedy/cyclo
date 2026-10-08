@@ -1,4 +1,4 @@
-import { addDays, format } from 'date-fns';
+import { format } from 'date-fns';
 import { supabase } from './supabase';
 import { db, type PartnerShareRef, type SettingsRecord } from './db';
 import { decryptJSON, encryptJSON, generateShareKey, importShareKey } from './crypto';
@@ -7,7 +7,7 @@ import { ensureSession, getUser } from './sync';
 import { CYCLE } from '@/domain/constants';
 
 /**
- * Partner sharing — an opt-in, revocable, expiring link.
+ * Partner sharing — an opt-in, revocable, permanent link.
  *
  * What travels: only the cycle "seed" (first name, last period start, average
  * lengths). NEVER symptoms, moods, notes or sexual activity. The partner view
@@ -29,7 +29,12 @@ export interface SharePayload {
   updatedAt: string;
 }
 
-export const SHARE_DAYS = 90;
+/**
+ * Links never expire — they stay valid until she revokes them. Postgres
+ * `'infinity'` satisfies the server's `expires_at > now()` check forever, so
+ * this needs no schema change on an existing database.
+ */
+export const SHARE_NEVER_EXPIRES = 'infinity';
 
 export function buildShareUrl(ref: Pick<PartnerShareRef, 'token' | 'key'>): string {
   const base = `${window.location.origin}${import.meta.env.BASE_URL}`;
@@ -53,7 +58,6 @@ export async function createPartnerShare(payload: SharePayload): Promise<Partner
 
   const { key, exported } = await generateShareKey();
   const envelope = await encryptJSON(key, payload);
-  const expiresAt = addDays(new Date(), SHARE_DAYS).toISOString();
 
   const { data, error } = await supabase
     .from('partner_shares')
@@ -61,23 +65,23 @@ export async function createPartnerShare(payload: SharePayload): Promise<Partner
       user_id: user.id,
       ciphertext: envelope.ciphertext,
       nonce: envelope.nonce,
-      expires_at: expiresAt,
+      expires_at: SHARE_NEVER_EXPIRES,
     })
-    .select('token, expires_at')
+    .select('token')
     .single();
   if (error) throw error;
 
   const ref: PartnerShareRef = {
     token: String(data.token),
     key: exported,
-    expiresAt: String(data.expires_at),
     createdAt: new Date().toISOString(),
   };
   await db.settings.update(USER_ID, { partnerShare: ref, updatedAt: new Date().toISOString() });
   return ref;
 }
 
-/** Keep the shared summary current. Safe to call on every app open. */
+/** Keep the shared summary current. Safe to call on every app open. Also turns
+ * links created back when they expired after 90 days into permanent ones. */
 export async function refreshPartnerShare(ref: PartnerShareRef, payload: SharePayload): Promise<void> {
   if (!supabase) return;
   // Only the owning session can update the row; skip quietly otherwise so we
@@ -87,7 +91,11 @@ export async function refreshPartnerShare(ref: PartnerShareRef, payload: SharePa
   const envelope = await encryptJSON(key, payload);
   await supabase
     .from('partner_shares')
-    .update({ ciphertext: envelope.ciphertext, nonce: envelope.nonce })
+    .update({
+      ciphertext: envelope.ciphertext,
+      nonce: envelope.nonce,
+      expires_at: SHARE_NEVER_EXPIRES,
+    })
     .eq('token', ref.token);
 }
 
@@ -108,7 +116,7 @@ export async function fetchPartnerShare(token: string, keyB64: string): Promise<
   const row = (Array.isArray(data) ? data[0] : data) as
     | { ciphertext: string; nonce: string }
     | undefined;
-  if (!row) throw new Error('Este link expirou ou foi revogado.');
+  if (!row) throw new Error('Este link foi revogado e não está mais disponível.');
   const key = await importShareKey(keyB64, ['decrypt']);
   return decryptJSON<SharePayload>(key, { ciphertext: row.ciphertext, nonce: row.nonce });
 }

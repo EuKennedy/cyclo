@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui';
 import { HeartIcon } from '@/components/icons';
 import type { SettingsRecord } from '@/lib/db';
@@ -9,7 +7,6 @@ import {
   buildShareUrl,
   createPartnerShare,
   revokePartnerShare,
-  SHARE_DAYS,
 } from '@/lib/partnerShare';
 
 export function PartnerShareSection({
@@ -79,11 +76,7 @@ export function PartnerShareSection({
       ) : (
         <>
           <p className="mt-3 text-[13px] leading-relaxed text-muted">
-            Link ativo. Expira em{' '}
-            <strong className="text-ink">
-              {format(parseISO(share.expiresAt), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
-            </strong>
-            .
+            Link ativo e <strong className="text-ink">permanente</strong> — não expira.
           </p>
 
           <p className="mt-3 break-all rounded-xl bg-white/[0.04] p-3 text-[11.5px] leading-relaxed text-faint">
@@ -129,7 +122,7 @@ export function PartnerShareSection({
       )}
 
       <p className="mt-3 text-[11.5px] leading-relaxed text-faint">
-        O link vale {SHARE_DAYS} dias e você pode revogá-lo quando quiser. A chave que abre o resumo
+        O link é permanente e você pode revogá-lo quando quiser. A chave que abre o resumo
         viaja só no endereço do link — o servidor guarda apenas texto cifrado que não consegue ler.
       </p>
 
