@@ -99,11 +99,29 @@ export async function refreshPartnerShare(ref: PartnerShareRef, payload: SharePa
     .eq('token', ref.token);
 }
 
-/** Kill the link immediately — the row (and its ciphertext) is deleted. */
+/** True while the partner can still open this link. */
+async function isShareLive(token: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { data, error } = await supabase.rpc('get_partner_share', { p_token: token });
+  if (error) throw error;
+  return Array.isArray(data) ? data.length > 0 : Boolean(data);
+}
+
+/**
+ * Kill the link immediately — the row (and its ciphertext) is deleted. RLS lets
+ * only the owning session delete, and a miss is silent (0 rows, no error). Since
+ * a link never expires, a missed revoke would leave it open forever, so it only
+ * counts once the server confirms the link is gone.
+ */
 export async function revokePartnerShare(ref: PartnerShareRef): Promise<void> {
   if (supabase) {
-    const { error } = await supabase.from('partner_shares').delete().eq('token', ref.token);
-    if (error) throw error;
+    // The server's answer below is what counts, error or not.
+    await supabase.from('partner_shares').delete().eq('token', ref.token);
+    if (await isShareLive(ref.token)) {
+      throw new Error(
+        'Não consegui revogar o link — ele continua ativo. Isso acontece quando ele foi criado em outra sessão deste app.',
+      );
+    }
   }
   await db.settings.update(USER_ID, { partnerShare: null, updatedAt: new Date().toISOString() });
 }
@@ -116,7 +134,7 @@ export async function fetchPartnerShare(token: string, keyB64: string): Promise<
   const row = (Array.isArray(data) ? data[0] : data) as
     | { ciphertext: string; nonce: string }
     | undefined;
-  if (!row) throw new Error('Este link foi revogado e não está mais disponível.');
+  if (!row) throw new Error('Este link não está mais ativo. Peça para ela enviar um link novo.');
   const key = await importShareKey(keyB64, ['decrypt']);
   return decryptJSON<SharePayload>(key, { ciphertext: row.ciphertext, nonce: row.nonce });
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NumberStepper } from '@/components/ui';
 import { purgeAll, updateSettings } from '@/lib/settings';
+import { revokePartnerShare } from '@/lib/partnerShare';
 import { formatBytes, getStorageStatus, type StorageStatus } from '@/lib/storage';
 import type { SettingsRecord } from '@/lib/db';
 import type { CycleState } from '@/lib/useCycle';
@@ -15,13 +16,32 @@ export function SettingsScreen({ settings, cycle }: { settings: SettingsRecord; 
   }, []);
 
   const handleReset = async () => {
+    const share = settings.partnerShare;
     if (
-      window.confirm(
-        'Isto apaga TODOS os seus dados deste dispositivo, de forma permanente e irreversível. Continuar?',
+      !window.confirm(
+        share
+          ? 'Isto apaga TODOS os seus dados deste dispositivo, de forma permanente e irreversível, e revoga o link do parceiro. Continuar?'
+          : 'Isto apaga TODOS os seus dados deste dispositivo, de forma permanente e irreversível. Continuar?',
       )
     ) {
-      await purgeAll();
+      return;
     }
+    // The link never expires, so wiping the only copy of it without revoking
+    // would leave it open with no way to close it.
+    if (share) {
+      try {
+        await revokePartnerShare(share);
+      } catch {
+        if (
+          !window.confirm(
+            'Não consegui revogar o link do parceiro — ele continuaria funcionando. Apagar mesmo assim?',
+          )
+        ) {
+          return;
+        }
+      }
+    }
+    await purgeAll();
   };
 
   return (

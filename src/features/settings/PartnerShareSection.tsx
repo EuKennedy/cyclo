@@ -76,7 +76,7 @@ export function PartnerShareSection({
       ) : (
         <>
           <p className="mt-3 text-[13px] leading-relaxed text-muted">
-            Link ativo e <strong className="text-ink">permanente</strong> — não expira.
+            Link ativo e <strong className="text-ink">sem data para expirar</strong>.
           </p>
 
           <p className="mt-3 break-all rounded-xl bg-white/[0.04] p-3 text-[11.5px] leading-relaxed text-faint">
@@ -122,8 +122,9 @@ export function PartnerShareSection({
       )}
 
       <p className="mt-3 text-[11.5px] leading-relaxed text-faint">
-        O link é permanente e você pode revogá-lo quando quiser. A chave que abre o resumo
-        viaja só no endereço do link — o servidor guarda apenas texto cifrado que não consegue ler.
+        O link vale até você revogá-lo, o que dá para fazer a qualquer momento. A chave que abre o
+        resumo viaja só no endereço do link — o servidor guarda apenas texto cifrado que não consegue
+        ler.
       </p>
 
       {error ? (

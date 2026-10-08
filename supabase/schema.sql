@@ -101,10 +101,13 @@ create table if not exists public.partner_shares (
 
 create index if not exists partner_shares_user_idx on public.partner_shares (user_id);
 
--- Databases created when links expired after 90 days: make every existing link
--- permanent too (this also revives ones that already lapsed). Idempotent.
+-- Databases created when links expired after 90 days: make every link that is
+-- still live permanent too. Lapsed ones stay dead — their owner may have tried to
+-- revoke them. Idempotent.
 alter table public.partner_shares alter column expires_at set default 'infinity';
-update public.partner_shares set expires_at = 'infinity' where expires_at <> 'infinity';
+update public.partner_shares
+  set expires_at = 'infinity'
+  where revoked = false and expires_at > now() and expires_at <> 'infinity';
 
 alter table public.partner_shares enable row level security;
 
